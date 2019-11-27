@@ -1,5 +1,3 @@
-# Modified from original author Martin Stone at https://github.com/martindstone/pagerduty-itsi
-
 import sys
 import json
 import urllib2
@@ -51,8 +49,8 @@ def send_notification(payload):
     logger.info('Calling url="%s" with body=%s' % (url, body))
     req = urllib2.Request(url, body, {"Content-Type": "application/json"})
 
-    #Route external traffic through proxy
-    proxy = "<proxy>.<domain>:<port>"
+    #Route external traffic through proxy, if set
+    proxy = "<server>:port"
     proxies = {"https":"https://%s" % proxy}
     proxy_support = urllib2.ProxyHandler(proxies)
     opener = urllib2.build_opener(proxy_support)
@@ -84,13 +82,16 @@ def send_notification(payload):
     return True
 
 
-def modify_payload(payload):     #Function to modify JSON payload before sending to PagerDuty, allowing PagerDuty Splunk integration to be reused for ITSI
+def modify_payload(payload):     #Function to modify JSON payload before sending to PagerDuty
     body_string = json.dumps(payload)
     body_load = json.loads(body_string)
+
+    logger.info('Original payload="%s"' % (body_string))
+
     pd_body = {}
 
-    #PagerDuty maps alert title to Core Splunk search_name; ITSI episode title is result.title
-    result_title = body_load['result']['title']
+    #PagerDuty maps alert title to Core Splunk search_name; ITSI episode title is result.itsi_group_title
+    result_title = body_load['result']['itsi_group_title']
     pd_body['search_name'] = result_title
 
     #Update link to event (requires import re)
@@ -108,11 +109,11 @@ def modify_payload(payload):     #Function to modify JSON payload before sending
 
     pd_body['result'] = {}
     pd_body['result']['correlation_search_name'] = body_load['result']['search_name']
-    pd_body['result']['_raw'] = body_load['result']['_raw']
+    pd_body['result']['_raw'] = body_load['result']['orig_raw']
     pd_body['result']['itsi_group_description'] = body_load['result']['itsi_group_description']
+    pd_body['result']['_time'] = body_load['result']['orig_time']
 
     #Include optional fields if they exist
-    pd_body['result']['_time'] = body_load['result']['_time']
     if 'actual_time' in body_load['result']:
         pd_body['result']['actual_time'] = body_load['result']['actual_time']
 

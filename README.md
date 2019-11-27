@@ -1,11 +1,11 @@
-# pagerduty-itsi
+# Splunk ITSI PagerDuty Alerts
 Splunk ITSI -> PagerDuty integration
 
 This is based on the original source code from Martin Stone at https://github.com/martindstone/pagerduty-itsi.
 
 This is a Notable Event Action that triggers a PagerDuty incident.  The following are updates from Martin Stone's original project:
 1. PagerDuty now has a standard Splunk integration.  The same integration can be used for Core Splunk and ITSI, but field mappings require a bit of changing from ITSI.
-2. PagerDuty now includes incidents and alerts.  By default, incidents are grouped and an incident number is not generated.  If alerts are disabled for a service, an incident number is still not a unique value so retrieving an incident number has been commented out in the code.
+2. PagerDuty now includes incidents and alerts.  By default, incidents are grouped and an incident number is not generated.  If alerts are disabled for a service, an incident number is still not a unique value so retrieving an incident number from PagerDuty has been commented out in the code.
 3. Changed notable event action verbiage from "Trigger PagerDuty Incident" to "PagerDuty Incident Integration" to align with Splunk's Remedy Add-On verbiage
 4. Updated logging to follow ITSI standard logging
 5. HTTP call is routed through proxy in our environment, if not needed remove the proxy routing from the python script
