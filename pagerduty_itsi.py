@@ -21,7 +21,9 @@ from ITOA.setup_logging import logger
 # updated for ITSI 4.0 - event actions were moved to EventGroup
 #from itsi.event_management.sdk.eventing import Event
 from itsi.event_management.sdk.grouping import EventGroup
-from itsi.event_management.sdk.custom_event_action_base import CustomEventActionBase
+#from custom_event_action_base to custom_group_action_base
+#from itsi.event_management.sdk.custom_event_action_base import CustomEventActionBase
+from itsi.event_management.sdk.custom_group_action_base import CustomGroupActionBase
 
 
 def send_notification(payload):
@@ -50,7 +52,7 @@ def send_notification(payload):
     req = urllib2.Request(url, body, {"Content-Type": "application/json"})
 
     #Route external traffic through proxy, if set
-    proxy = "<server>:port"
+    proxy = "<proxy>:<port>"
     proxies = {"https":"https://%s" % proxy}
     proxy_support = urllib2.ProxyHandler(proxies)
     opener = urllib2.build_opener(proxy_support)
@@ -71,7 +73,7 @@ def send_notification(payload):
     event_id = payload['result']['itsi_group_id']
     session_key = payload['session_key']
     time.sleep(5) # wait 5 seconds for an incident to be created
-    
+
     try:
         event = EventGroup(session_key)
         event.create_comment(event_id, "Successfully sent PagerDuty alert to %s" % url)
@@ -92,7 +94,7 @@ def modify_payload(payload):     #Function to modify JSON payload before sending
 
     #PagerDuty maps alert title to Core Splunk search_name; ITSI episode title is result.itsi_group_title
     result_title = body_load['result']['itsi_group_title']
-    pd_body['search_name'] = result_title
+        pd_body['search_name'] = result_title
 
     #Update link to event (requires import re)
     #FROM Core Splunk https://<server>/app/SA-ITOA/@go?sid=<sid_here>
@@ -113,12 +115,21 @@ def modify_payload(payload):     #Function to modify JSON payload before sending
     pd_body['result']['itsi_group_description'] = body_load['result']['itsi_group_description']
     pd_body['result']['_time'] = body_load['result']['orig_time']
 
+    #Map severity
+    try:
+        results_severity = int(body_load['result']['severity'])    #ITSI severity is 1-6, cast to integer before modifying
+        updated_severity = modify_severity(results_severity)
+        pd_body['result']['log_level'] = updated_severity
+    except:
+        logger.error("Error setting severity mapping for PagerDuty")
+        pd_body['result']['log_level'] = 'CRITICAL'
+
     #Include optional fields if they exist
     if 'actual_time' in body_load['result']:
         pd_body['result']['actual_time'] = body_load['result']['actual_time']
 
-    pd_body['result']['service_name'] = '' 
     if 'service_name' in body_load['result']:
+        pd_body['result']['service_name'] = ''
         pd_body['result']['service_name'] = body_load['result']['service_name']
 
     if 'drilldown_title' in body_load['result']:
@@ -128,8 +139,21 @@ def modify_payload(payload):     #Function to modify JSON payload before sending
             pd_body['result'][drilldown_title] = body_load['result']['drilldown_uri']
     elif 'drilldown_uri' in body_load['result']:
         pd_body['result']['drilldown_uri'] = body_load['result']['drilldown_uri']
- 
+
     return pd_body
+
+def modify_severity(itsi_severity):
+    #Function to map ITSI severity (integer) to PagerDuty severity.  Low and High urgency are the only options used in our environment.
+    #Valid PagerDuty values: ERROR, WARN, CRITICAL, FATAL
+    sev_map={
+        1:'WARN',
+        2:'WARN',
+        3:'WARN',
+        4:'WARN',
+        5:'CRITICAL',
+        6:'CRITICAL'
+    }
+    return sev_map.get(itsi_severity,'CRITICAL')
 
 
 if __name__ == "__main__":

@@ -14,11 +14,15 @@ This is a Notable Event Action that triggers a PagerDuty incident.  The followin
 
 1. Create a Splunk Integration in PagerDuty as the default
 
-3. Copy pagerduty_itsi.py to SPLUNK_HOME/etc/apps/SA-ITOA/bin
+3. Copy pagerduty_itsi.py to SPLUNK_HOME/etc/apps/SA-ITOA/bin (These can also be added to shcluster/apps/SA-ITOA from Search Head Cluster deployer)
 
-4. Copy pagerduty_itsi.html to SPLUNK_HOME/etc/apps/SA-ITOA/default/data/ui/alerts
+4. Modify line 55 to match your proxy server, or remove the proxy lines if your server can access public Internet directly
 
-5. Edit SPLUNK_HOME/etc/apps/SA-ITOA/local/alert_actions.conf and add the following text at the bottom:
+5. Modify def_severity to match your PagerDuty severities.
+
+6. Copy pagerduty_itsi.html to SPLUNK_HOME/etc/apps/SA-ITOA/default/data/ui/alerts
+
+7. Edit SPLUNK_HOME/etc/apps/SA-ITOA/local/alert_actions.conf and add the following text at the bottom:
 
 	```
 	[pagerduty_itsi]
@@ -30,7 +34,7 @@ This is a Notable Event Action that triggers a PagerDuty incident.  The followin
 	payload_format = json
 	```
 
-6. Edit SPLUNK_HOME/etc/apps/SA-ITOA/local/notable_event_actions.conf and add the following text at the bottom:
+8. Edit SPLUNK_HOME/etc/apps/SA-ITOA/local/notable_event_actions.conf and add the following text at the bottom:
 
 	```
 	[pagerduty_itsi]
@@ -38,6 +42,6 @@ This is a Notable Event Action that triggers a PagerDuty incident.  The followin
 	execute_once_per_group = 0
 	```
 
-7. Restart Splunk: SPLUNK_HOME/bin/splunk restart
+9. Restart Splunk: SPLUNK_HOME/bin/splunk restart
 
 You should now see a new item called "PagerDuty Incident Integration" in the Actions menu in Notable Events.
