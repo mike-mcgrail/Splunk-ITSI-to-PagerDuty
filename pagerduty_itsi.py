@@ -94,7 +94,7 @@ def modify_payload(payload):     #Function to modify JSON payload before sending
 
     #PagerDuty maps alert title to Core Splunk search_name; ITSI episode title is result.itsi_group_title
     result_title = body_load['result']['itsi_group_title']
-        pd_body['search_name'] = result_title
+    pd_body['search_name'] = result_title
 
     #Update link to event (requires import re)
     #FROM Core Splunk https://<server>/app/SA-ITOA/@go?sid=<sid_here>
